@@ -32,6 +32,7 @@ public slots:
     void ecrireListe();
     void lancerFenetreVariables();
     void faireGraph(QVector<int> *listeRes);
+    double bankrollApresParis(QVector<QString> *listeResultats, double coteUnique , double bk);
 
 signals:
     void itemRecherche(const QListWidgetItem*);
@@ -44,6 +45,7 @@ private:
     Ui::MainWindow *ui;
     ListesGagne *liste;
     Parieur *parieur;
+    double bankroll;
 };
 
 #endif // MAINWINDOW_H

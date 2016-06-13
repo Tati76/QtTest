@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    this->parieur = new Parieur(100);
+    this->parieur = new Parieur(100.0,100.0,1.0,45.0);
     liste = new ListesGagne(8,2);
     QObject::connect(ui->lineEdit,SIGNAL(returnPressed()),this,SLOT(goToItem()));
     QObject::connect(this,SIGNAL(itemRecherche(const QListWidgetItem*)),ui->listWidget,SLOT(scrollToItem(const QListWidgetItem*)));
@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
+    this->bankroll = 100;
 
     // generate some data:
     QVector<double> x(101), y(101); // initialize with entries 0..100
@@ -64,15 +64,17 @@ void MainWindow::setListeGagne(ListesGagne list)
 
 void MainWindow::ecrireListe()
 {
+    double resultatAEcrire=0;
     ListesGagne *listeProvisoire = new ListesGagne(ui->lineEdit_n->text().toInt(),ui->lineEdit_k->text().toInt());
     ui->listWidget->clear();
     QVector<QString> *resultat = new QVector<QString>(listeProvisoire->genererListes());
     //resultat = liste->genererListes();
-    for (int i(0); i<resultat->size();i++)
+    /*for (int i(0); i<resultat->size();i++)
     {
         ui->listWidget->addItem((*resultat)[i]);
-    }
+    }*/
     qDebug() << resultat->size() ; // print le nb de resultats
+    double AB = bankrollApresParis(resultat,1.44,100.0);
     delete resultat;
     delete listeProvisoire;
 }
@@ -162,4 +164,39 @@ void MainWindow::setPourcentageAParierParieur(double toSet)
 void MainWindow::setReussiteParieur(double toSet)
 {
     this->parieur->setReussite(toSet);
+}
+
+double MainWindow::bankrollApresParis(QVector<QString> *listeResultats, double coteUnique, double bk )
+{
+    double res = 0;
+    double resMin = 0;
+    int positionMin = 0;
+    int position = 0;
+    for (int i=0 ; i<listeResultats->size() ; i++)
+    {
+        parieur->setBankroll(bk);
+        for(int a=0 ; a<(*listeResultats)[i].size() ; a++)
+        {
+            parieur->parier(new Pari(coteUnique,(*listeResultats)[i][a].digitValue()));
+        }
+        if (i==0)
+        {
+            resMin = parieur->getBankroll();
+        }
+        if(res < parieur->getBankroll())
+        {
+            res = parieur->getBankroll();
+            position = i;
+        }
+        if(resMin > parieur->getBankroll())
+        {
+            resMin = parieur->getBankroll();
+            positionMin = i;
+        }
+    }
+    qDebug() << "Max : " << res << "   en position : " << position;
+    qDebug() << "Min : " << resMin << "   en position : " << positionMin;
+    double resultat = parieur->getBankroll();
+    parieur->setBankroll(bk);
+    return resultat;
 }
